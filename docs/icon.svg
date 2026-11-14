@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5CCBFA"/><stop offset="1" stop-color="#C9F0FF"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1C9BD8"/><stop offset="1" stop-color="#0B6FA4"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <circle cx="420" cy="92" r="46" fill="#FFD43B"/>
+  <circle cx="420" cy="92" r="62" fill="#FFE066" opacity=".35"/>
+  <path d="M0 360 Q64 336 128 360 T256 360 T384 360 T512 360 V512 H0Z" fill="url(#sea)"/>
+  <path d="M0 392 Q64 372 128 392 T256 392 T384 392 T512 392" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="8"/>
+  <ellipse cx="256" cy="372" rx="210" ry="44" fill="#F2C25C"/>
+  <ellipse cx="256" cy="362" rx="196" ry="34" fill="#FFE3A1"/>
+  <!-- ヤシの木 -->
+  <path d="M104 362 C100 300 112 250 140 208" fill="none" stroke="#8B5A2B" stroke-width="16" stroke-linecap="round"/>
+  <g fill="#2FB344">
+    <path d="M140 208 C110 186 76 190 56 212 C88 204 112 210 140 208Z"/>
+    <path d="M140 208 C120 170 132 140 158 128 C150 160 150 184 140 208Z"/>
+    <path d="M140 208 C170 180 206 182 224 202 C192 196 168 200 140 208Z"/>
+    <path d="M140 208 C116 214 92 240 92 266 C108 238 124 224 140 208Z"/>
+  </g>
+  <!-- お題のタイル -->
+  <g transform="rotate(-6 300 236)">
+    <rect x="198" y="132" width="210" height="210" rx="48" fill="#E8A800"/>
+    <rect x="198" y="120" width="210" height="206" rx="48" fill="#FFD43B"/>
+    <text x="303" y="272" text-anchor="middle" font-family="'Dela Gothic One','Hiragino Maru Gothic ProN',sans-serif" font-size="150" fill="#3B2A12">あ</text>
+  </g>
+  <!-- しぶき -->
+  <g fill="#fff"><circle cx="440" cy="356" r="10"/><circle cx="462" cy="336" r="7"/><circle cx="420" cy="334" r="6"/></g>
+</svg>

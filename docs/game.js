@@ -134,96 +134,135 @@
   }
 
   // ---------- 画面 ----------
+  const S = n => window.KotobaSound && window.KotobaSound.play(n);
+  let lastLobbyCount = 0, lastTurnKey = "", lastSec = -1, phaseShown = "", lastPhase = "";
   function receive(snap) {
     view = snap;
-    if (snap.kind === "lobby") { game = isHost ? null : game; show("lobby"); renderLobby(); return; }
+    if (snap.kind === "lobby") {
+      if (!isHost) game = null;
+      if (snap.members.length > lastLobbyCount && lastLobbyCount > 0) S("join");
+      lastLobbyCount = snap.members.length; phaseShown = "lobby"; lastPhase = "";
+      show("lobby"); renderLobby(); return;
+    }
     const g = snap.game;
     localDeadline = Date.now() + snap.remainMs;
-    if (g.events.length < shownEvents) { shownEvents = 0; shownUsed = 0; }
-    for (const ev of g.events.slice(shownEvents)) {
-      const p = g.players.find(x => x.id === ev.id);
-      if (p) splash(`${p.av} ${p.name}さん、海へざぶーん！`);
-    }
+    const isNew = phaseShown !== "game" || (lastPhase === "over" && g.phase === "playing") || g.events.length < shownEvents;
+    if (isNew) { shownEvents = 0; shownUsed = 0; if (g.phase === "playing") S("start"); }
+    const prevPhase = isNew ? "" : lastPhase; lastPhase = g.phase;
+    phaseShown = "game";
+    const fresh = g.events.slice(shownEvents);
     shownEvents = g.events.length;
-    if (g.phase === "over") { renderOver(g); show("over"); return; }
+    if (g.phase === "over") {
+      fresh.forEach(ev => bubble(ev, g));
+      const first = prevPhase !== "over";
+      if (first) setTimeout(() => S("win"), fresh.length ? 900 : 0);
+      renderOver(g, first); show("over"); return;
+    }
     if ($("play").classList.contains("hide")) { $("playMsg").textContent = ""; $("word").value = ""; }
-    show("play"); renderPlay(g);
+    show("play"); renderPlay(g, fresh.map(e => e.id));
+    fresh.forEach(ev => bubble(ev, g));
+    const cur = g.players[g.turn], key = g.used.length + ":" + g.turn + ":" + g.events.length;
+    if (key !== lastTurnKey) { lastTurnKey = key; lastSec = -1; if (cur && cur.id === myId) S("turn"); }
   }
 
-  function playerTiles(list, g) {
-    const tiles = list.map((p, i) => {
+  function bubble(ev, g) {
+    const p = g.players.find(x => x.id === ev.id); if (!p) return;
+    S("splash");
+    const fx = $("fx");
+    const b = document.createElement("div"); b.className = "bubble";
+    b.textContent = `${p.name}、${ev.why === "giveup" ? "ギブアップ！" : ev.why === "left" ? "島をはなれた" : "海へざぶーん！"}`;
+    const w = document.createElement("div"); w.className = "splashfx emo"; w.textContent = "💦";
+    fx.append(b, w); setTimeout(() => { b.remove(); w.remove(); }, 2100);
+  }
+
+  function chars(list, g, falling = []) {
+    const out = list.map((p, i) => {
       const av = p.av || L.AVATARS[i % L.AVATARS.length];
-      const cls = g ? (p.alive ? (g.players[g.turn] && g.players[g.turn].id === p.id ? "turn" : "") : "out") : "";
-      return `<div class="p ${cls}"><span class="av">${av}</span>${esc(p.name)}${p.id === myId ? `<span class="me">じぶん</span>` : ""}</div>`;
+      let cls = "";
+      if (g) cls = !p.alive ? (falling.includes(p.id) ? "falling" : "out") : (g.players[g.turn] && g.players[g.turn].id === p.id ? "turn" : "");
+      return `<div class="ch ${cls}"><div class="face emo">${p.alive === false && !falling.includes(p.id) ? "🛟" : av}</div><span class="tag">${esc(p.name)}</span>${p.id === myId ? `<span class="me">じぶん</span>` : ""}</div>`;
     });
-    while (tiles.length < L.MAX_PLAYERS) tiles.push(`<div class="p empty"><span class="av">・</span>あき</div>`);
-    return tiles.join("");
+    if (!g) while (out.length < L.MAX_PLAYERS) out.push(`<div class="ch empty"><div class="face">？</div><span class="tag">あき</span></div>`);
+    return out.join("");
   }
 
   function renderLobby() {
     const list = view && view.kind === "lobby" ? view.members : members;
-    $("lobbyPlayers").innerHTML = playerTiles(list);
+    $("lobbyPlayers").innerHTML = chars(list);
     $("timeWrap").classList.toggle("hide", !isHost);
     $("start").classList.toggle("hide", !isHost);
     $("waitHost").classList.toggle("hide", isHost);
     $("start").disabled = list.length < 2;
-    $("start").textContent = list.length < 2 ? "あと1人以上あつまったらスタート" : `${list.length}人でスタート`;
+    $("start").textContent = list.length < 2 ? "あと1人あつまったらスタート" : `🏁 ${list.length}人でスタート`;
   }
 
-  function renderPlay(g) {
+  function renderPlay(g, falling = []) {
     $("odai").textContent = g.odai;
-    $("odaiText").textContent = `「${g.odai}」から始まる言葉！`;
     const cur = g.players[g.turn];
     const mine = cur && cur.id === myId;
-    $("turnName").textContent = mine ? "あなたの番！" : `${cur ? cur.name : ""}さんの番`;
-    $("playPlayers").innerHTML = playerTiles(g.players, g);
-    $("used").innerHTML = g.used.map((u, i) => `<span class="${i >= shownUsed ? "new" : ""}">${esc(u.w)}</span>`).join("") || `<span style="border:0;background:none;color:var(--sub)">まだ出た言葉はありません</span>`;
+    $("turnName").dataset.who = mine ? "あなたの番！" : `${cur ? cur.name : ""}の番`;
+    $("leftCount").textContent = `🏝 のこり ${g.players.filter(p => p.alive).length}人`;
+    $("roomPill").textContent = `部屋 ${$("code").textContent}`;
+    $("playPlayers").innerHTML = chars(g.players, g, falling);
+    $("used").innerHTML = g.used.map((u, i) => `<span class="${i >= shownUsed ? "new" : ""}"><span class="emo">🐚</span> ${esc(u.w)}</span>`).join("") || `<span class="none">「${g.odai}」から始まる言葉を出そう！</span>`;
     $("used").scrollTop = $("used").scrollHeight;
     shownUsed = g.used.length;
     const me = g.players.find(p => p.id === myId);
     const canType = mine && me && me.alive;
     $("word").disabled = !canType; $("send").disabled = !canType;
-    $("giveup").classList.toggle("hide", !(me && me.alive));
-    $("word").placeholder = canType ? `「${g.odai}」から始まることば` : (me && !me.alive ? "見学中…" : "まってね");
+    $("giveup").classList.toggle("hide", !canType);
+    $("word").placeholder = canType ? `「${g.odai}」から始まることば` : (me && !me.alive ? "うきわで見学中…" : "まってね");
     if (canType) $("word").focus();
+    drawTimer();
   }
 
-  function renderOver(g) {
+  function renderOver(g, first = true) {
     const w = g.players.find(p => p.id === g.winner);
-    $("winner").innerHTML = w ? `<span class="av">${w.av}</span>${esc(w.name)}さんの勝ち！<div class="small">お題「${g.odai}」・出た言葉 ${g.used.length}こ</div>` : "引き分け";
-    $("overUsed").innerHTML = g.used.map(u => `<span>${esc(u.w)}</span>`).join("");
+    $("winner").innerHTML = w ? `<div class="crown emo">👑</div><div class="winface emo">${w.av}</div><div class="big" style="font-size:26px">${esc(w.name)} の勝ち！</div>` : `<div class="big">引き分け</div>`;
+    // 順位：勝った人 → あとまで残った人ほど上
+    const outOrder = g.events.filter(e => e.type === "out").map(e => e.id);
+    const order = [g.winner, ...outOrder.slice().reverse()].filter(Boolean);
+    $("rank").innerHTML = order.map((id, i) => { const p = g.players.find(x => x.id === id); return p ? `<div><b>${i + 1}</b><span class="emo">${p.av}</span> ${esc(p.name)}・${p.words}こ</div>` : ""; }).join("");
+    $("overUsed").innerHTML = g.used.map(u => `<span>${esc(u.w)}</span>`).join("") || "";
     $("again").classList.toggle("hide", !isHost);
     $("waitAgain").classList.toggle("hide", isHost);
     $("again").disabled = !isHost || members.length < 2;
+    if (!first) return;
+    const fx = $("fx"); const c = document.createElement("div"); c.className = "confetti";
+    c.innerHTML = Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 37) % 100}%;background:${["#F76707", "#FFD43B", "#2FB344", "#1C9BD8"][i % 4]};animation-delay:${(i % 6) * 0.35}s"></i>`).join("");
+    fx.append(c); setTimeout(() => c.remove(), 6500);
   }
 
   function showResult(res) {
     const m = $("playMsg");
-    if (res.ok) { m.className = "msg ok"; m.textContent = `✓「${res.word}」は辞書にあります`; $("word").value = ""; }
-    else { m.className = "msg ng"; m.textContent = (L.REASON[res.reason] || "出せませんでした") + (res.word ? `（${res.word}）` : ""); }
+    if (res.ok) { m.className = "msg ok"; m.textContent = `✓「${res.word}」は辞書にあります`; $("word").value = ""; S("ok"); }
+    else { m.className = "msg ng"; m.textContent = (L.REASON[res.reason] || "出せませんでした") + (res.word ? `（${res.word}）` : ""); S("ng"); }
   }
   function alertMsg(t) { const m = $("playMsg"); m.className = "msg ng"; m.textContent = t; homeMsg(t); }
 
-  function splash(text) {
-    const s = $("splash"); s.firstElementChild.textContent = text; s.classList.remove("hide");
-    s.firstElementChild.style.animation = "none"; void s.offsetWidth; s.firstElementChild.style.animation = "";
-    clearTimeout(splash.t); splash.t = setTimeout(() => s.classList.add("hide"), 1600);
-  }
-
   // 残り時間の表示（どの端末も自分の時計で数える）
-  setInterval(() => {
+  function drawTimer() {
     if (!view || view.kind !== "game" || view.game.phase !== "playing") return;
     const left = Math.max(0, localDeadline - Date.now());
     const pct = Math.min(100, left / (view.game.timeLimit * 1000) * 100);
-    $("bar").firstElementChild.style.width = pct + "%";
-    $("bar").classList.toggle("hurry", left < 3000);
-    $("sec").textContent = `のこり ${Math.ceil(left / 1000)}びょう`;
-  }, 100);
+    $("ring").style.setProperty("--p", pct + "%");
+    $("ring").classList.toggle("hurry", left < 3000);
+    const sec = Math.ceil(left / 1000);
+    $("turnName").textContent = `${$("turnName").dataset.who || ""}　${sec}`;
+    if (sec !== lastSec) { if (lastSec !== -1 && sec <= 3 && sec > 0) S("tick"); lastSec = sec; }
+  }
+  setInterval(drawTimer, 100);
+
+  document.querySelectorAll(".soundBtn").forEach(b => b.onclick = () => {
+    const m = window.KotobaSound.toggle();
+    document.querySelectorAll(".soundBtn").forEach(x => { x.textContent = m ? "🔇" : "🔊"; x.setAttribute("aria-label", m ? "音を出す" : "音をきる"); });
+  });
+  if (window.KotobaSound && window.KotobaSound.muted) document.querySelectorAll(".soundBtn").forEach(x => { x.textContent = "🔇"; x.setAttribute("aria-label", "音を出す"); });
 
   function quit(goHome = true) {
     clearInterval(timer);
     try { if (peer) peer.destroy(); } catch (e) { /* */ }
-    peer = null; hostConn = null; isHost = false; myId = null; game = null; view = null; members = []; conns.clear();
+    peer = null; hostConn = null; isHost = false; myId = null; game = null; view = null; members = []; conns.clear(); lastLobbyCount = 0; phaseShown = "";
     $("create").disabled = false; $("join").disabled = false;
     show("home");
     if (goHome) homeMsg("");

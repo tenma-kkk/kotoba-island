@@ -4,111 +4,186 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>のこれ！ことば島</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
 <style>
-:root{--bg:#FFF6E0;--fg:#3B2A12;--sub:#8A6A3A;--tile:#FFD43B;--tileShadow:#E8A800;--ac:#E8590C;--acSoft:#FFF0E0;--card:#fff;--line:#F3D9A4;--barBg:#FFE8A3;--ok:#2F9E44;--ng:#C92A2A}
+:root{color-scheme:light;--ink:#3B2A12;--sub:#8A6A3A;--orange:#F76707;--orangeD:#C24E00;--yellow:#FFD43B;--yellowD:#E8A800;--sea:#1C9BD8;--seaD:#0B6FA4;--sky1:#7FD8FF;--sky2:#D6F4FF;--sand:#FFE3A1;--sandD:#F2C25C;--ok:#2F9E44;--ng:#E03131}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%}
-body{background:var(--bg);color:var(--fg);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",system-ui,sans-serif;line-height:1.6;-webkit-tap-highlight-color:transparent}
-.app{max-width:460px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:grid;gap:16px}
-.logo{font-size:26px;font-weight:800;color:var(--ac);text-align:center;margin:8px 0 0}
-.lead{text-align:center;color:var(--sub);font-size:14px;margin:0}
-.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px}
-label{font-size:13px;color:var(--sub);display:grid;gap:4px}
-input,select{font:inherit;font-size:18px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--fg);width:100%}
-input:focus,select:focus{outline:3px solid var(--tile);border-color:var(--ac)}
-button{font:inherit;font-weight:800;font-size:17px;border:0;border-radius:14px;padding:12px 16px;cursor:pointer;background:var(--ac);color:#fff;box-shadow:0 4px 0 #B8430A}
-button:active{transform:translateY(2px);box-shadow:0 2px 0 #B8430A}
-button.sub{background:#fff;color:var(--ac);border:2px solid var(--ac);box-shadow:none}
-button:disabled{opacity:.45;cursor:default}
-.row{display:flex;gap:8px}.row>*{flex:1}
-.code{font-size:44px;font-weight:800;letter-spacing:.2em;text-align:center;color:var(--ac)}
-.players{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.p{background:#fff;border:2px solid var(--tile);border-radius:14px;padding:8px 4px;text-align:center;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:opacity .4s}
-.p .av{font-size:26px;display:block;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
-.p .me{display:block;font-size:10px;color:var(--ac);font-weight:800;line-height:1.2}
-.p.turn{border-color:var(--ac);background:var(--acSoft);transform:scale(1.05)}
-.p.out{opacity:.3}
-.p.out .av{filter:grayscale(1)}
-.p.empty{border-style:dashed;opacity:.5}
-.center{display:grid;place-items:center;gap:6px}
-.odai{width:132px;height:132px;display:grid;place-items:center;font-size:72px;font-weight:800;background:var(--tile);border-radius:30px;box-shadow:0 7px 0 var(--tileShadow)}
-.bar{height:12px;border-radius:99px;background:var(--barBg);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--ac);transition:width .2s linear}
-.bar.hurry i{background:var(--ng)}
-.turnline{font-size:15px;font-weight:800;display:flex;justify-content:space-between}
-.used{display:flex;flex-wrap:wrap;gap:6px;font-size:14px;max-height:120px;overflow:auto}
-.used span{background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px 8px}
-.used span.new{border-color:var(--ac);animation:pop .4s}
-@keyframes pop{from{transform:scale(1.4)}to{transform:scale(1)}}
-.msg{min-height:1.6em;text-align:center;font-size:14px;font-weight:800}
-.msg.ok{color:var(--ok)}.msg.ng{color:var(--ng)}
-.splash{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:5}
-.splash div{background:#1C7ED6;color:#fff;font-size:28px;font-weight:800;padding:16px 26px;border-radius:20px;animation:splash 1.6s forwards}
-@keyframes splash{0%{transform:translateY(-40px);opacity:0}20%{transform:none;opacity:1}80%{opacity:1}100%{transform:translateY(40px);opacity:0}}
-.win{font-size:24px;font-weight:800;text-align:center}
-.win .av{font-size:64px;display:block}
-.small{font-size:12px;color:var(--sub);text-align:center}
-.small a{color:var(--sub)}
+html,body{margin:0;height:100%}
+body{color:var(--ink);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",system-ui,sans-serif;background:var(--sky2);overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.emo{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+/* 景色（いつも後ろにある） */
+.scene{position:fixed;inset:0;z-index:0;background:linear-gradient(var(--sky1),var(--sky2) 55%);overflow:hidden}
+.sun{position:absolute;top:28px;right:6%;width:70px;height:70px;border-radius:50%;background:radial-gradient(#FFF3A8,#FFD43B 60%,#FFC300);box-shadow:0 0 44px #FFE066}
+.cloud{position:absolute;background:#fff;border-radius:99px;opacity:.9;animation:drift 18s ease-in-out infinite alternate}
+.cloud::before,.cloud::after{content:"";position:absolute;background:#fff;border-radius:50%}
+.cloud::before{width:40%;height:160%;left:15%;bottom:20%}.cloud::after{width:35%;height:130%;right:15%;bottom:25%}
+@keyframes drift{from{transform:translateX(-30px)}to{transform:translateX(30px)}}
+.sea{position:absolute;left:0;right:0;bottom:0;height:38%;background:linear-gradient(var(--sea),var(--seaD))}
+.wave{position:absolute;left:-10%;width:120%;height:40px;top:-18px;background:radial-gradient(circle at 20px -6px,transparent 22px,var(--sea) 23px) 0 0/40px 40px repeat-x;animation:wave 3s ease-in-out infinite alternate}
+.wave.w2{top:-8px;opacity:.6;animation-duration:4s;filter:brightness(1.15)}
+@keyframes wave{to{transform:translateX(-20px)}}
+.island{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(38% - 46px);width:min(760px,130%);height:130px;background:radial-gradient(ellipse at 50% 32%,var(--sand) 55%,var(--sandD) 72%,transparent 73%)}
+.palm{position:absolute;bottom:calc(38% + 8px);left:max(2%,calc(50% - 340px));width:110px;height:140px}
+/* 画面 */
+.app{position:relative;z-index:1;min-height:100dvh;max-width:520px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));display:flex;flex-direction:column}
+.scr{flex:1;display:flex;flex-direction:column;gap:14px}
 .hide{display:none!important}
-.rules{font-size:13px;color:var(--sub);margin:0;padding-left:1.2em}
+.logo{margin:6px 0 0;text-align:center;font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:40px;line-height:1.08;color:#fff;-webkit-text-stroke:8px var(--orangeD);paint-order:stroke fill;text-shadow:0 6px 0 var(--orangeD)}
+.logo small{display:block;font-size:24px}
+.grow{flex:1;min-height:12px}
+.panel{background:#fff;border-radius:24px;padding:16px;box-shadow:0 8px 0 rgba(11,111,164,.35);display:grid;gap:12px}
+.lead{margin:0;text-align:center;font-size:14px;color:var(--sub);line-height:1.6}
+label{display:grid;gap:4px;font-size:13px;font-weight:800;color:var(--sub)}
+input,select{font:inherit;font-size:18px;padding:11px 14px;border:3px solid var(--sand);border-radius:14px;background:#FFFBF0;color:var(--ink);width:100%;min-width:0}
+input:focus,select:focus{outline:none;border-color:var(--orange)}
+input:disabled{opacity:.7}
+button{font:inherit;font-weight:800;font-size:18px;border:0;border-radius:18px;padding:13px 14px;cursor:pointer;color:#fff;background:var(--orange);box-shadow:0 6px 0 var(--orangeD);transition:transform .05s}
+button:active{transform:translateY(3px);box-shadow:0 3px 0 var(--orangeD)}
+button.y{background:var(--yellow);color:var(--ink);box-shadow:0 6px 0 var(--yellowD)}
+button.w{background:#fff;color:var(--orange);box-shadow:0 5px 0 rgba(0,0,0,.12)}
+button:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;align-items:stretch}.row>*{flex:1;min-width:0}
+.msg{min-height:1.4em;margin:0;text-align:center;font-size:14px;font-weight:800}
+.msg.ok{color:var(--ok)}.msg.ng{color:var(--ng)}
+.rules{margin:0;padding-left:1.2em;font-size:13px;color:var(--sub);line-height:1.7}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{background:#fff;border-radius:99px;padding:5px 12px;font-weight:800;font-size:13px;box-shadow:0 3px 0 rgba(0,0,0,.1);white-space:nowrap}
+.sound{padding:5px 10px;font-size:16px;border-radius:99px;background:#fff;color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.1)}
+.code{font-family:"Dela Gothic One",sans-serif;font-size:52px;letter-spacing:.18em;text-align:center;color:var(--orange);line-height:1.1}
+/* キャラ */
+.chars{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;min-height:96px;align-items:flex-end}
+.ch{display:grid;justify-items:center;gap:3px;font-weight:800;font-size:12px;width:68px;transition:opacity .4s}
+.ch .face{width:60px;height:60px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:34px;box-shadow:0 4px 0 rgba(0,0,0,.12);border:4px solid #fff}
+.ch .tag{background:#fff;border-radius:99px;padding:1px 8px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch .me{font-size:10px;color:var(--orangeD)}
+.ch.turn .face{border-color:var(--orange);animation:hop .5s ease-in-out infinite alternate}
+.ch.turn .tag{background:var(--orange);color:#fff}
+.ch.empty .face{background:rgba(255,255,255,.45);box-shadow:none;border-style:dashed;border-color:rgba(255,255,255,.9);font-size:20px;color:#fff}
+.ch.empty .tag{background:rgba(255,255,255,.5)}
+.ch.out{opacity:.55}
+.ch.out .face{filter:grayscale(.7)}
+.ch.falling{animation:fall 1.6s ease-in forwards}
+@keyframes hop{to{transform:translateY(-8px)}}
+@keyframes fall{0%{transform:none}25%{transform:translateY(-16px) rotate(-8deg)}70%{transform:translateY(120px) rotate(25deg);opacity:1}100%{transform:translateY(130px);opacity:.55}}
+.stand{position:fixed;left:0;right:0;bottom:calc(38% + 14px);z-index:1;pointer-events:none}
+/* 対戦 */
+.sign{display:grid;justify-items:center;gap:6px}
+.ring{--p:100%;width:min(46vw,190px);aspect-ratio:1;display:grid;place-items:center;border-radius:50%;background:conic-gradient(var(--orange) 0 var(--p),rgba(255,255,255,.65) var(--p) 100%)}
+.ring.hurry{background:conic-gradient(var(--ng) 0 var(--p),rgba(255,255,255,.65) var(--p) 100%)}
+.tile{width:80%;aspect-ratio:1;border-radius:22%;background:var(--yellow);box-shadow:inset 0 -10px 0 var(--yellowD),0 6px 0 rgba(0,0,0,.12);display:grid;place-items:center;font-family:"Dela Gothic One",sans-serif;font-size:min(23vw,92px);color:var(--ink);animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px) rotate(-2deg)}}
+.big{font-family:"Dela Gothic One",sans-serif;font-size:21px;color:#fff;-webkit-text-stroke:5px var(--orangeD);paint-order:stroke fill;text-align:center;line-height:1.3}
+.shells{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:96px;overflow:auto}
+.shells span{background:rgba(255,255,255,.94);border-radius:99px;padding:3px 10px;font-weight:800;font-size:13px;color:var(--seaD)}
+.shells span.new{background:var(--yellow);color:var(--ink);animation:pop .5s}
+.shells .none{background:none;color:#fff;font-weight:500}
+@keyframes pop{from{transform:scale(1.6)}}
+.inbar{background:#fff;border-radius:22px;padding:10px;display:grid;gap:8px;box-shadow:0 6px 0 rgba(0,0,0,.18)}
+.inbar form{display:flex;gap:8px}.inbar input{flex:1}.inbar button{flex:0 0 auto;padding:10px 18px}
+.giveup{background:none;box-shadow:none;color:var(--sub);font-size:13px;padding:2px;text-decoration:underline}
+/* 吹き出し */
+.bubble{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:5;background:#fff;border-radius:20px;padding:10px 18px;font-family:"Dela Gothic One",sans-serif;font-size:22px;color:var(--seaD);white-space:nowrap;box-shadow:0 6px 0 rgba(0,0,0,.12);pointer-events:none;animation:bubble 2s forwards}
+@keyframes bubble{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%)}}
+.splashfx{position:fixed;left:50%;bottom:30%;z-index:4;font-size:56px;pointer-events:none;animation:spl 1.4s forwards}
+@keyframes spl{0%,40%{opacity:0;transform:translateX(-50%) scale(.4)}55%{opacity:1;transform:translateX(-50%) scale(1.25)}100%{opacity:0;transform:translateX(-50%) scale(1.5)}}
+/* けっか */
+.winbox{display:grid;justify-items:center;gap:4px}
+.crown{font-size:48px;animation:bob 1.6s infinite}
+.winface{width:124px;height:124px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:74px;border:6px solid var(--yellow);box-shadow:0 6px 0 var(--yellowD)}
+.rank{display:grid;gap:6px}
+.rank div{display:flex;align-items:center;gap:8px;background:#FFFBF0;border-radius:12px;padding:6px 10px;font-weight:800;font-size:14px}
+.rank b{font-family:"Dela Gothic One",sans-serif;color:var(--orange);width:1.6em;font-weight:400}
+.overUsed{display:flex;flex-wrap:wrap;gap:6px;max-height:110px;overflow:auto}
+.overUsed span{background:#EAF7FF;color:var(--seaD);border-radius:99px;padding:2px 10px;font-size:13px;font-weight:800}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+.confetti i{position:absolute;top:-20px;width:10px;height:16px;border-radius:3px;animation:conf 3.2s linear infinite}
+@keyframes conf{to{transform:translateY(110vh) rotate(720deg)}}
+.credit{margin:10px 0 0;text-align:center;font-size:11px;color:rgba(255,255,255,.9)}
+.credit a{color:#fff}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
 <body>
-<div class="app">
-  <h1 class="logo">🏝 のこれ！ことば島</h1>
+<div class="scene" aria-hidden="true">
+  <div class="sun"></div>
+  <div class="cloud" style="top:110px;left:6%;width:90px;height:26px"></div>
+  <div class="cloud" style="top:190px;right:8%;width:64px;height:19px;animation-duration:24s"></div>
+  <div class="island"></div><svg class="palm" viewBox="40 120 200 250" aria-hidden="true"><path d="M104 362 C100 300 112 250 140 208" fill="none" stroke="#8B5A2B" stroke-width="16" stroke-linecap="round"/><g fill="#2FB344"><path d="M140 208 C110 186 76 190 56 212 C88 204 112 210 140 208Z"/><path d="M140 208 C120 170 132 140 158 128 C150 160 150 184 140 208Z"/><path d="M140 208 C170 180 206 182 224 202 C192 196 168 200 140 208Z"/><path d="M140 208 C116 214 92 240 92 266 C108 238 124 224 140 208Z"/><path d="M140 208 C160 214 184 236 188 258 C170 236 156 222 140 208Z"/></g></svg>
+  <div class="sea"><div class="wave"></div><div class="wave w2"></div></div>
+</div>
 
+<main class="app">
   <!-- はじめ -->
-  <section id="home" class="card">
-    <p class="lead">お題のひらがなから始まる言葉を、順番に言おう。<br>言えなくなったら海へざぶーん！最後まで島にのこった人の勝ち。</p>
-    <label>なまえ<input id="name" maxlength="8" placeholder="ニックネーム" autocomplete="off"></label>
-    <button id="create">部屋をつくる</button>
-    <div class="row"><input id="joinCode" inputmode="numeric" maxlength="4" placeholder="部屋番号 4けた"><button id="join" class="sub">入る</button></div>
-    <div id="homeMsg" class="msg ng"></div>
-    <ul class="rules">
-      <li>2〜4人。それぞれのタブレット・パソコンで遊びます</li>
-      <li>辞書に載っている言葉だけ。一度出た言葉は使えません</li>
-      <li>カタカナで入れても大丈夫（アイス → あいす）</li>
-    </ul>
+  <section id="home" class="scr">
+    <div class="top"><span></span><button type="button" class="sound soundBtn" aria-label="音をきる">🔊</button></div>
+    <h1 class="logo">のこれ！<small>ことば島</small></h1>
+    <div class="chars"><div class="ch"><div class="face emo">🐻</div></div><div class="ch"><div class="face emo">🐰</div></div><div class="ch"><div class="face emo">🦊</div></div><div class="ch"><div class="face emo">🐸</div></div></div>
+    <div class="grow"></div>
+    <div class="panel">
+      <p class="lead">お題のひらがなから始まる言葉を順番に言おう。<br>言えなくなったら海へざぶーん！</p>
+      <input id="name" maxlength="8" placeholder="なまえ（ニックネーム）" autocomplete="off" aria-label="なまえ">
+      <button id="create" type="button">🏝 部屋をつくる</button>
+      <div class="row"><input id="joinCode" inputmode="numeric" maxlength="4" placeholder="部屋番号 4けた" aria-label="部屋番号" style="flex:2"><button id="join" type="button" class="y">入る</button></div>
+      <p id="homeMsg" class="msg ng"></p>
+      <ul class="rules">
+        <li>2〜4人。それぞれのタブレット・パソコンで遊びます</li>
+        <li>辞書に載っている言葉だけ。一度出た言葉は使えません</li>
+        <li>カタカナで入れても大丈夫（アイス → あいす）</li>
+      </ul>
+    </div>
   </section>
 
   <!-- 待ち合わせ -->
-  <section id="lobby" class="card hide">
-    <p class="lead">部屋番号をみんなに教えてね</p>
-    <div id="code" class="code"></div>
-    <div id="lobbyPlayers" class="players"></div>
-    <label id="timeWrap">ひとりの持ち時間<select id="time"><option value="7">7びょう</option><option value="10" selected>10びょう</option><option value="15">15びょう</option><option value="20">20びょう</option></select></label>
-    <button id="start" disabled>スタート</button>
-    <p id="waitHost" class="lead hide">部屋をつくった人がスタートするのを待っています…</p>
-    <button id="leave" class="sub">やめる</button>
+  <section id="lobby" class="scr hide">
+    <div class="top"><span class="pill">🏝 待ち合わせ</span><button type="button" class="sound soundBtn" aria-label="音をきる">🔊</button></div>
+    <div class="panel" style="gap:4px"><p class="lead">部屋番号をみんなに教えてね</p><div id="code" class="code"></div></div>
+    <div class="grow"></div>
+    <div id="lobbyPlayers" class="chars"></div>
+    <div class="grow"></div>
+    <div class="panel">
+      <label id="timeWrap">ひとりの持ち時間<select id="time"><option value="7">7びょう</option><option value="10" selected>10びょう</option><option value="15">15びょう</option><option value="20">20びょう</option></select></label>
+      <button id="start" type="button" disabled>スタート</button>
+      <p id="waitHost" class="lead hide">部屋をつくった人がスタートするのを待っています…</p>
+      <button id="leave" type="button" class="w">やめる</button>
+    </div>
   </section>
 
   <!-- 対戦 -->
-  <section id="play" class="hide" style="display:grid;gap:14px">
-    <div class="center"><div id="odai" class="odai"></div><div id="odaiText" style="font-weight:800"></div></div>
-    <div><div class="turnline"><span id="turnName"></span><span id="sec"></span></div><div id="bar" class="bar"><i></i></div></div>
-    <div id="playPlayers" class="players"></div>
-    <div id="used" class="used"></div>
-    <form id="wordForm" class="row"><input id="word" autocomplete="off" placeholder="ことばを入れてね"><button id="send" style="flex:0 0 auto">出す</button></form>
-    <div id="playMsg" class="msg"></div>
-    <button id="giveup" class="sub">ギブアップ</button>
+  <section id="play" class="scr hide">
+    <div class="top"><span id="leftCount" class="pill"></span><span style="display:flex;gap:6px;flex:0 0 auto"><span id="roomPill" class="pill"></span><button type="button" class="sound soundBtn" aria-label="音をきる">🔊</button></span></div>
+    <div class="sign"><div id="ring" class="ring"><div id="odai" class="tile"></div></div><div id="turnName" class="big"></div></div>
+    <div id="playPlayers" class="chars stand"></div>
+    <div class="grow"></div>
+    <div id="used" class="shells"></div>
+    <div class="inbar">
+      <form id="wordForm"><input id="word" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ことばを入れてね" aria-label="ことば"><button id="send">出す</button></form>
+      <p id="playMsg" class="msg"></p>
+      <button id="giveup" type="button" class="giveup">ギブアップする</button>
+    </div>
   </section>
 
   <!-- けっか -->
-  <section id="over" class="card hide">
-    <div id="winner" class="win"></div>
-    <div id="overUsed" class="used"></div>
-    <button id="again">もう一回（同じメンバー）</button>
-    <p id="waitAgain" class="lead hide">部屋をつくった人が「もう一回」を押すのを待っています…</p>
-    <button id="toHome" class="sub">はじめにもどる</button>
+  <section id="over" class="scr hide">
+    <h2 class="logo" style="font-size:32px">さいごまで<small>のこった！</small></h2>
+    <div id="winner" class="winbox"></div>
+    <div class="grow"></div>
+    <div class="panel">
+      <div id="rank" class="rank"></div>
+      <div id="overUsed" class="overUsed"></div>
+      <button id="again" type="button">もう一回（同じメンバー）</button>
+      <p id="waitAgain" class="lead hide">部屋をつくった人が「もう一回」を押すのを待っています…</p>
+      <button id="toHome" type="button" class="w">はじめにもどる</button>
+    </div>
   </section>
 
-  <p class="small">辞書：<a href="https://www.edrdg.org/jmdict/j_jmdict.html" target="_blank" rel="noopener">JMdict</a>（EDRDG・CC BY-SA 4.0）から作成</p>
-</div>
-<div id="splash" class="splash hide"><div></div></div>
+  <p class="credit">辞書：<a href="https://www.edrdg.org/jmdict/j_jmdict.html" target="_blank" rel="noopener">JMdict</a>（EDRDG・CC BY-SA 4.0）から作成</p>
+</main>
+<div id="fx"></div>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="logic.js"></script>
+<script src="sound.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
