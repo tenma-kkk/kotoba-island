@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>のこれ！ことば島</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<style>
+:root{--bg:#FFF6E0;--fg:#3B2A12;--sub:#8A6A3A;--tile:#FFD43B;--tileShadow:#E8A800;--ac:#E8590C;--acSoft:#FFF0E0;--card:#fff;--line:#F3D9A4;--barBg:#FFE8A3;--ok:#2F9E44;--ng:#C92A2A}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--fg);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",system-ui,sans-serif;line-height:1.6;-webkit-tap-highlight-color:transparent}
+.app{max-width:460px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:grid;gap:16px}
+.logo{font-size:26px;font-weight:800;color:var(--ac);text-align:center;margin:8px 0 0}
+.lead{text-align:center;color:var(--sub);font-size:14px;margin:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px}
+label{font-size:13px;color:var(--sub);display:grid;gap:4px}
+input,select{font:inherit;font-size:18px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--fg);width:100%}
+input:focus,select:focus{outline:3px solid var(--tile);border-color:var(--ac)}
+button{font:inherit;font-weight:800;font-size:17px;border:0;border-radius:14px;padding:12px 16px;cursor:pointer;background:var(--ac);color:#fff;box-shadow:0 4px 0 #B8430A}
+button:active{transform:translateY(2px);box-shadow:0 2px 0 #B8430A}
+button.sub{background:#fff;color:var(--ac);border:2px solid var(--ac);box-shadow:none}
+button:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.code{font-size:44px;font-weight:800;letter-spacing:.2em;text-align:center;color:var(--ac)}
+.players{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.p{background:#fff;border:2px solid var(--tile);border-radius:14px;padding:8px 4px;text-align:center;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:opacity .4s}
+.p .av{font-size:26px;display:block;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.p .me{display:block;font-size:10px;color:var(--ac);font-weight:800;line-height:1.2}
+.p.turn{border-color:var(--ac);background:var(--acSoft);transform:scale(1.05)}
+.p.out{opacity:.3}
+.p.out .av{filter:grayscale(1)}
+.p.empty{border-style:dashed;opacity:.5}
+.center{display:grid;place-items:center;gap:6px}
+.odai{width:132px;height:132px;display:grid;place-items:center;font-size:72px;font-weight:800;background:var(--tile);border-radius:30px;box-shadow:0 7px 0 var(--tileShadow)}
+.bar{height:12px;border-radius:99px;background:var(--barBg);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ac);transition:width .2s linear}
+.bar.hurry i{background:var(--ng)}
+.turnline{font-size:15px;font-weight:800;display:flex;justify-content:space-between}
+.used{display:flex;flex-wrap:wrap;gap:6px;font-size:14px;max-height:120px;overflow:auto}
+.used span{background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px 8px}
+.used span.new{border-color:var(--ac);animation:pop .4s}
+@keyframes pop{from{transform:scale(1.4)}to{transform:scale(1)}}
+.msg{min-height:1.6em;text-align:center;font-size:14px;font-weight:800}
+.msg.ok{color:var(--ok)}.msg.ng{color:var(--ng)}
+.splash{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:5}
+.splash div{background:#1C7ED6;color:#fff;font-size:28px;font-weight:800;padding:16px 26px;border-radius:20px;animation:splash 1.6s forwards}
+@keyframes splash{0%{transform:translateY(-40px);opacity:0}20%{transform:none;opacity:1}80%{opacity:1}100%{transform:translateY(40px);opacity:0}}
+.win{font-size:24px;font-weight:800;text-align:center}
+.win .av{font-size:64px;display:block}
+.small{font-size:12px;color:var(--sub);text-align:center}
+.small a{color:var(--sub)}
+.hide{display:none!important}
+.rules{font-size:13px;color:var(--sub);margin:0;padding-left:1.2em}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1 class="logo">🏝 のこれ！ことば島</h1>
+
+  <!-- はじめ -->
+  <section id="home" class="card">
+    <p class="lead">お題のひらがなから始まる言葉を、順番に言おう。<br>言えなくなったら海へざぶーん！最後まで島にのこった人の勝ち。</p>
+    <label>なまえ<input id="name" maxlength="8" placeholder="ニックネーム" autocomplete="off"></label>
+    <button id="create">部屋をつくる</button>
+    <div class="row"><input id="joinCode" inputmode="numeric" maxlength="4" placeholder="部屋番号 4けた"><button id="join" class="sub">入る</button></div>
+    <div id="homeMsg" class="msg ng"></div>
+    <ul class="rules">
+      <li>2〜4人。それぞれのタブレット・パソコンで遊びます</li>
+      <li>辞書に載っている言葉だけ。一度出た言葉は使えません</li>
+      <li>カタカナで入れても大丈夫（アイス → あいす）</li>
+    </ul>
+  </section>
+
+  <!-- 待ち合わせ -->
+  <section id="lobby" class="card hide">
+    <p class="lead">部屋番号をみんなに教えてね</p>
+    <div id="code" class="code"></div>
+    <div id="lobbyPlayers" class="players"></div>
+    <label id="timeWrap">ひとりの持ち時間<select id="time"><option value="7">7びょう</option><option value="10" selected>10びょう</option><option value="15">15びょう</option><option value="20">20びょう</option></select></label>
+    <button id="start" disabled>スタート</button>
+    <p id="waitHost" class="lead hide">部屋をつくった人がスタートするのを待っています…</p>
+    <button id="leave" class="sub">やめる</button>
+  </section>
+
+  <!-- 対戦 -->
+  <section id="play" class="hide" style="display:grid;gap:14px">
+    <div class="center"><div id="odai" class="odai"></div><div id="odaiText" style="font-weight:800"></div></div>
+    <div><div class="turnline"><span id="turnName"></span><span id="sec"></span></div><div id="bar" class="bar"><i></i></div></div>
+    <div id="playPlayers" class="players"></div>
+    <div id="used" class="used"></div>
+    <form id="wordForm" class="row"><input id="word" autocomplete="off" placeholder="ことばを入れてね"><button id="send" style="flex:0 0 auto">出す</button></form>
+    <div id="playMsg" class="msg"></div>
+    <button id="giveup" class="sub">ギブアップ</button>
+  </section>
+
+  <!-- けっか -->
+  <section id="over" class="card hide">
+    <div id="winner" class="win"></div>
+    <div id="overUsed" class="used"></div>
+    <button id="again">もう一回（同じメンバー）</button>
+    <p id="waitAgain" class="lead hide">部屋をつくった人が「もう一回」を押すのを待っています…</p>
+    <button id="toHome" class="sub">はじめにもどる</button>
+  </section>
+
+  <p class="small">辞書：<a href="https://www.edrdg.org/jmdict/j_jmdict.html" target="_blank" rel="noopener">JMdict</a>（EDRDG・CC BY-SA 4.0）から作成</p>
+</div>
+<div id="splash" class="splash hide"><div></div></div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="logic.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
