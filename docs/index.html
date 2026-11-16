@@ -100,6 +100,17 @@ button:disabled{opacity:.5;cursor:default}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:3;overflow:hidden}
 .confetti i{position:absolute;top:-20px;width:10px;height:16px;border-radius:3px;animation:conf 3.2s linear infinite}
 @keyframes conf{to{transform:translateY(110vh) rotate(720deg)}}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg button{background:#fff;color:var(--ink);border:3px solid var(--sand);box-shadow:0 4px 0 var(--sandD);font-size:14px;padding:8px 2px;display:grid;gap:0;line-height:1.3}
+.seg button .emo{font-size:22px}
+.seg button small{font-size:10px;font-weight:500;color:var(--sub)}
+.seg button[aria-pressed="true"]{border-color:var(--orange);background:var(--yellow)}
+.recs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;font-size:12px;font-weight:800;color:var(--sub)}
+.recs div{background:#FFFBF0;border-radius:12px;padding:6px 4px}
+.recs b{display:block;font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:20px;color:var(--orange);word-break:break-all;line-height:1.2}
+.recs b.s{font-size:14px}
+.new{display:inline-block;background:var(--ng);color:#fff;border-radius:99px;padding:0 6px;font-size:10px;margin-left:2px;vertical-align:middle}
+.subhead{margin:0;font-size:13px;font-weight:800;color:var(--sub)}
 .credit{margin:10px 0 0;text-align:center;font-size:11px;color:rgba(255,255,255,.9)}
 .credit a{color:#fff}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
@@ -124,14 +135,34 @@ button:disabled{opacity:.5;cursor:default}
     <div class="panel">
       <p class="lead">お題のひらがなから始まる言葉を順番に言おう。<br>言えなくなったら海へざぶーん！</p>
       <input id="name" maxlength="8" placeholder="なまえ（ニックネーム）" autocomplete="off" aria-label="なまえ">
-      <button id="create" type="button">🏝 部屋をつくる</button>
+      <button id="soloGo" type="button" style="font-size:20px">🏝 ひとりで遊ぶ<br><small style="font-size:12px;font-weight:500">CPU のなかまと対戦</small></button>
+      <div id="homeRecs" class="recs hide"></div>
+      <p class="subhead">👫 ともだちと遊ぶ（オンライン）</p>
+      <button id="create" type="button" class="y">部屋をつくる</button>
       <div class="row"><input id="joinCode" inputmode="numeric" maxlength="4" placeholder="部屋番号 4けた" aria-label="部屋番号" style="flex:2"><button id="join" type="button" class="y">入る</button></div>
       <p id="homeMsg" class="msg ng"></p>
       <ul class="rules">
-        <li>2〜4人。それぞれのタブレット・パソコンで遊びます</li>
+        <li>ひとりなら CPU と。ともだちとなら 2〜4人、それぞれのタブレット・パソコンで</li>
         <li>辞書に載っている言葉だけ。一度出た言葉は使えません</li>
         <li>カタカナで入れても大丈夫（アイス → あいす）</li>
       </ul>
+    </div>
+  </section>
+
+  <!-- ひとりで遊ぶ：CPU をえらぶ -->
+  <section id="solo" class="scr hide">
+    <div class="top"><span class="pill">🏝 ひとりで遊ぶ</span><button type="button" class="sound soundBtn" aria-label="音をきる">🔊</button></div>
+    <div class="grow"></div>
+    <div class="panel">
+      <p class="subhead">なんにんと たたかう？</p>
+      <div class="seg" id="segN" role="group" aria-label="CPU の人数"><button type="button" data-v="1" aria-pressed="false"><span class="emo">🐰</span>1人</button><button type="button" data-v="2" aria-pressed="true"><span class="emo">🐰🦊</span>2人</button><button type="button" data-v="3" aria-pressed="false"><span class="emo">🐰🦊🐸</span>3人</button></div>
+      <p class="subhead">つよさ</p>
+      <div class="seg" id="segLv" role="group" aria-label="CPU のつよさ"><button type="button" data-v="easy" aria-pressed="true"><span class="emo">🌱</span>やさしい<small>ゆっくり</small></button><button type="button" data-v="normal" aria-pressed="false"><span class="emo">🌴</span>ふつう<small>ほどよく</small></button><button type="button" data-v="strong" aria-pressed="false"><span class="emo">🌋</span>つよい<small>すばやい</small></button></div>
+      <p class="subhead">もちじかん</p>
+      <div class="seg" id="segT" role="group" aria-label="持ち時間"><button type="button" data-v="7" aria-pressed="false">7びょう</button><button type="button" data-v="10" aria-pressed="true">10びょう</button><button type="button" data-v="15" aria-pressed="false">15びょう</button></div>
+      <button id="soloStart" type="button">スタート！</button>
+      <p id="soloMsg" class="msg ng"></p>
+      <button id="soloBack" type="button" class="w">もどる</button>
     </div>
   </section>
 
@@ -172,7 +203,9 @@ button:disabled{opacity:.5;cursor:default}
     <div class="panel">
       <div id="rank" class="rank"></div>
       <div id="overUsed" class="overUsed"></div>
+      <div id="soloRecs" class="hide" style="display:grid;gap:6px"></div>
       <button id="again" type="button">もう一回（同じメンバー）</button>
+      <button id="changeLv" type="button" class="y hide">つよさを かえる</button>
       <p id="waitAgain" class="lead hide">部屋をつくった人が「もう一回」を押すのを待っています…</p>
       <button id="toHome" type="button" class="w">はじめにもどる</button>
     </div>

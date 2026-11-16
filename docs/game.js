@@ -4,7 +4,7 @@
   const L = window.KotobaLogic;
   const PREFIX = "nijin-kotobajima-v1-";
   const $ = id => document.getElementById(id);
-  const screens = ["home", "lobby", "play", "over"];
+  const screens = ["home", "solo", "lobby", "play", "over"];
   const show = name => screens.forEach(s => $(s).classList.toggle("hide", s !== name));
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -14,6 +14,9 @@
   let members = [], timeLimit = 10, game = null, dict = null, timer = null;
   // 画面に出している最新の状態
   let view = null, localDeadline = 0, shownEvents = 0, shownUsed = 0;
+  // ひとりで遊ぶ（CPU 対戦）。通信は使わず、この端末の中だけで動く
+  let solo = false, soloLevel = "easy", soloN = 2, soloT = 10, cpuWords = [], cpuKey = "", cpuTimer = null;
+  const isCpu = id => typeof id === "string" && id.startsWith("cpu");
 
   try { $("name").value = localStorage.getItem("kotobajima-name") || ""; } catch (e) { /* 保存できなくても遊べる */ }
   const myName = () => { const n = $("name").value.trim().slice(0, 8) || "なまえなし"; try { localStorage.setItem("kotobajima-name", n); } catch (e) { /* */ } return n; };
@@ -71,18 +74,26 @@
   async function hostStart() {
     if (members.length < 2) return;
     $("start").disabled = true;
-    timeLimit = Number($("time").value) || 10;
+    timeLimit = solo ? soloT : (Number($("time").value) || 10);
     const odai = L.pickOdai();
+    const hex = odai.codePointAt(0).toString(16);
+    const get = path => fetch(path).then(r => { if (!r.ok) throw Error(r.status); return r.text(); });
     try {
-      const text = await fetch("dict/" + odai.codePointAt(0).toString(16) + ".txt").then(r => { if (!r.ok) throw Error(r.status); return r.text(); });
+      const text = await get("dict/" + hex + ".txt");
       dict = new Set(text.split("\n"));
+      if (solo) {
+        const lv = L.CPU_LEVELS[soloLevel];
+        cpuWords = lv.pool === "full" ? [...dict] : (await get("dict/common/" + hex + ".txt")).split("\n");
+      }
     } catch (e) {
-      $("start").disabled = false; alertMsg("辞書を読めませんでした。もう一度スタートしてね"); return;
+      $("start").disabled = false; $("soloStart").disabled = false; alertMsg("辞書を読めませんでした。もう一度スタートしてね"); return;
     }
+    $("soloStart").disabled = false;
     game = L.startGame(members, { now: Date.now(), odai, timeLimit });
     shownEvents = 0; shownUsed = 0;
     clearInterval(timer);
-    timer = setInterval(() => { if (game && L.tick(game, Date.now())) afterChange(); }, 200);
+    timer = setInterval(() => { if (game && L.tick(game, Date.now())) afterChange(); if (solo) cpuStep(); }, 200);
+    cpuKey = ""; recorded = false;
     broadcast();
   }
 
@@ -93,8 +104,73 @@
     if (res.ok) broadcast();
   }
 
+  // CPU の番なら、強さに合わせた時間だけ「かんがえて」から言葉を出す
+  function cpuStep() {
+    if (!game || game.phase !== "playing") return;
+    const cur = game.players[game.turn];
+    if (!cur || !isCpu(cur.id)) return;
+    const key = game.used.length + ":" + game.turn + ":" + game.events.length;
+    if (key === cpuKey) return;
+    cpuKey = key;
+    const ms = L.CPU_LEVELS[soloLevel].delay(game.timeLimit) * 1000;
+    clearTimeout(cpuTimer);
+    cpuTimer = setTimeout(() => {
+      if (!game || game.phase !== "playing") return;
+      const now = game.players[game.turn];
+      if (!now || now.id !== cur.id || game.used.length + ":" + game.turn + ":" + game.events.length !== key) return;
+      const w = L.cpuPick(cpuWords, game.used, soloLevel);
+      if (!w) return; // 言えない → 時間切れで海へ
+      const m = $("playMsg"); m.className = "msg ok"; m.textContent = `${cur.av}「${w}」`;
+      hostWord(cur.id, w, () => {});
+    }, ms);
+  }
+
+  // ひとり遊びの最高記録（この端末の中だけに残す）
+  let recorded = false;
+  const readJSON = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+  const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 保存できなくても遊べる */ } };
+  function recsHTML(best, fresh = {}, now) {
+    const b = best || { streak: 0, words: 0, longest: "" };
+    const n = k => fresh[k] ? `<span class="new">NEW</span>` : "";
+    const src = now || b;
+    return `<div><b>${src.streak}</b>れんしょう${n("streak")}</div><div><b>${src.words}</b>言えた数${n("words")}</div><div><b class="${(src.longest || "").length > 5 ? "s" : ""}">${src.longest ? esc(src.longest) : "−"}</b>長い言葉${n("longest")}</div>`;
+  }
+  function showHomeRecs() {
+    const best = readJSON("kotoba-best");
+    $("homeRecs").classList.toggle("hide", !best);
+    if (best) $("homeRecs").innerHTML = recsHTML(best);
+  }
+  function recordSolo(g) {
+    if (recorded) return; recorded = true;
+    const me = g.players.find(p => p.id === "host");
+    const mine = g.used.filter(u => u.by === "host").map(u => u.w);
+    const longest = mine.reduce((a, w) => w.length > a.length ? w : a, "");
+    const r = L.updateRecords(readJSON("kotoba-best"), readJSON("kotoba-run"), { won: g.winner === "host", words: me ? me.words : 0, longest });
+    writeJSON("kotoba-best", r.best); writeJSON("kotoba-run", r.run);
+    $("soloRecs").innerHTML = `<p class="subhead">こんかい</p><div class="recs">${recsHTML(null, r.fresh, { streak: r.run.streak, words: me ? me.words : 0, longest })}</div><p class="subhead">さいこう記録（この端末）</p><div class="recs">${recsHTML(r.best)}</div>`;
+  }
+
+  function startSolo() {
+    solo = true; isHost = true; myId = "host"; peer = null;
+    members = [{ id: "host", name: myName() }];
+    for (let i = 0; i < soloN; i++) members.push({ id: "cpu" + (i + 1), name: L.CPU_NAMES[i] });
+    $("code").textContent = "";
+    $("soloStart").disabled = true; $("soloMsg").textContent = "";
+    game = null; hostStart();
+  }
+
+  // ひとりで遊ぶとき、自分が海へ落ちたら、そこで勝負を終わりにする（CPU どうしの続きは待たせない）
+  function endSoloIfOut(g) {
+    const me = g.players.find(p => p.id === "host");
+    if (g.phase !== "playing" || !me || me.alive) return;
+    const left = g.players.filter(p => p.alive).sort((a, b) => b.words - a.words);
+    g.phase = "over"; g.winner = left[0] ? left[0].id : null;
+    left.slice(1).reverse().forEach(p => g.events.push({ type: "out", id: p.id, why: "end", at: Date.now() }));
+  }
+
   function afterChange() {
-    if (game && game.phase === "over") clearInterval(timer);
+    if (solo && game) endSoloIfOut(game);
+    if (game && game.phase === "over") { clearInterval(timer); clearTimeout(cpuTimer); if (solo) recordSolo(game); }
     broadcast();
   }
 
@@ -166,7 +242,7 @@
   }
 
   function bubble(ev, g) {
-    const p = g.players.find(x => x.id === ev.id); if (!p) return;
+    const p = g.players.find(x => x.id === ev.id); if (!p || ev.why === "end") return;
     S("splash");
     const fx = $("fx");
     const b = document.createElement("div"); b.className = "bubble";
@@ -202,7 +278,8 @@
     const mine = cur && cur.id === myId;
     $("turnName").dataset.who = mine ? "あなたの番！" : `${cur ? cur.name : ""}の番`;
     $("leftCount").textContent = `🏝 のこり ${g.players.filter(p => p.alive).length}人`;
-    $("roomPill").textContent = `部屋 ${$("code").textContent}`;
+    $("roomPill").textContent = solo ? "ひとりで" : `部屋 ${$("code").textContent}`;
+    if (solo && cur && isCpu(cur.id) && !$("playMsg").textContent.startsWith(cur.av)) { const m = $("playMsg"); m.className = "msg"; m.textContent = `${cur.av} かんがえ中…`; }
     $("playPlayers").innerHTML = chars(g.players, g, falling);
     $("used").innerHTML = g.used.map((u, i) => `<span class="${i >= shownUsed ? "new" : ""}"><span class="emo">🐚</span> ${esc(u.w)}</span>`).join("") || `<span class="none">「${g.odai}」から始まる言葉を出そう！</span>`;
     $("used").scrollTop = $("used").scrollHeight;
@@ -225,6 +302,9 @@
     $("rank").innerHTML = order.map((id, i) => { const p = g.players.find(x => x.id === id); return p ? `<div><b>${i + 1}</b><span class="emo">${p.av}</span> ${esc(p.name)}・${p.words}こ</div>` : ""; }).join("");
     $("overUsed").innerHTML = g.used.map(u => `<span>${esc(u.w)}</span>`).join("") || "";
     $("again").classList.toggle("hide", !isHost);
+    $("again").textContent = solo ? "もういちど" : "もう一回（同じメンバー）";
+    $("changeLv").classList.toggle("hide", !solo);
+    $("soloRecs").classList.toggle("hide", !solo);
     $("waitAgain").classList.toggle("hide", isHost);
     $("again").disabled = !isHost || members.length < 2;
     if (!first) return;
@@ -235,7 +315,7 @@
 
   function showResult(res) {
     const m = $("playMsg");
-    if (res.ok) { m.className = "msg ok"; m.textContent = `✓「${res.word}」は辞書にあります`; $("word").value = ""; S("ok"); }
+    if (res.ok) { m.className = "msg ok"; m.textContent = `✓「${res.word}」は辞書にあります`; $("word").value = ""; S("ok"); setTimeout(() => { if (m.textContent.startsWith("✓")) m.textContent = ""; }, solo ? 900 : 99999); }
     else { m.className = "msg ng"; m.textContent = (L.REASON[res.reason] || "出せませんでした") + (res.word ? `（${res.word}）` : ""); S("ng"); }
   }
   function alertMsg(t) { const m = $("playMsg"); m.className = "msg ng"; m.textContent = t; homeMsg(t); }
@@ -260,15 +340,32 @@
   if (window.KotobaSound && window.KotobaSound.muted) document.querySelectorAll(".soundBtn").forEach(x => { x.textContent = "🔇"; x.setAttribute("aria-label", "音を出す"); });
 
   function quit(goHome = true) {
-    clearInterval(timer);
+    clearInterval(timer); clearTimeout(cpuTimer); solo = false;
     try { if (peer) peer.destroy(); } catch (e) { /* */ }
     peer = null; hostConn = null; isHost = false; myId = null; game = null; view = null; members = []; conns.clear(); lastLobbyCount = 0; phaseShown = "";
     $("create").disabled = false; $("join").disabled = false;
-    show("home");
+    show("home"); showHomeRecs();
     if (goHome) homeMsg("");
   }
 
   // ---------- ボタン ----------
+  const seg = (id, set) => $(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    $(id).querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    set(b.dataset.v);
+  });
+  const soloPrefs = readJSON("kotoba-solo-prefs");
+  if (soloPrefs) { soloN = soloPrefs.n || 2; soloLevel = soloPrefs.lv || "easy"; soloT = soloPrefs.t || 10;
+    [["segN", soloN], ["segLv", soloLevel], ["segT", soloT]].forEach(([id, v]) => $(id).querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x.dataset.v === String(v) ? "true" : "false"))); }
+  const savePrefs = () => writeJSON("kotoba-solo-prefs", { n: soloN, lv: soloLevel, t: soloT });
+  seg("segN", v => { soloN = Number(v); savePrefs(); });
+  seg("segLv", v => { soloLevel = v; savePrefs(); });
+  seg("segT", v => { soloT = Number(v); savePrefs(); });
+  $("soloGo").onclick = () => { myName(); show("solo"); };
+  $("soloBack").onclick = () => show("home");
+  $("soloStart").onclick = startSolo;
+  $("changeLv").onclick = () => { clearInterval(timer); clearTimeout(cpuTimer); game = null; view = null; phaseShown = ""; show("solo"); };
+  showHomeRecs();
   $("create").onclick = () => createRoom();
   $("join").onclick = joinRoom;
   $("joinCode").addEventListener("keydown", e => { if (e.key === "Enter") joinRoom(); });
@@ -276,7 +373,7 @@
   $("time").onchange = () => broadcast();
   $("leave").onclick = () => quit();
   $("toHome").onclick = () => quit();
-  $("again").onclick = () => { game = null; hostStart(); };
+  $("again").onclick = () => { game = null; if (solo) $("playMsg").textContent = ""; hostStart(); };
   $("wordForm").onsubmit = e => {
     e.preventDefault();
     const w = $("word").value;
