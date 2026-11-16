@@ -84,6 +84,39 @@
     if (i >= 0 && s.phase === "playing") eliminate(s, i, "left", now);
   }
 
+  // CPU の強さ。pool は「よく使う言葉」（common）か辞書ぜんぶ（full）。
+  const CPU_LEVELS = {
+    easy:   { pool: "common", maxLen: 4, miss: 0.18, delay: t => t * (0.4 + Math.random() * 0.25) },
+    normal: { pool: "common", maxLen: 7, miss: 0.06, delay: t => Math.min(t * 0.6, 2 + Math.random() * 2) },
+    strong: { pool: "full",   maxLen: 99, miss: 0.01, delay: t => Math.min(t * 0.4, 1 + Math.random()) },
+  };
+  const CPU_NAMES = ["ウサギ", "キツネ", "カエル"];
+
+  /** CPU が出す言葉をえらぶ。言えないとき（わざと海へ）は null。 */
+  function cpuPick(words, used, level, rng) {
+    const r = rng || Math.random, lv = CPU_LEVELS[level] || CPU_LEVELS.normal;
+    if (r() < lv.miss) return null;
+    const usedSet = new Set(used.map(u => u.w || u));
+    const ok = words.filter(w => w && w.length >= 2 && w.length <= lv.maxLen && !usedSet.has(w));
+    if (!ok.length) return null;
+    if (level === "strong") { // つよい：長めの言葉をえらびやすい
+      const long = ok.filter(w => w.length >= 5);
+      if (long.length && r() < 0.6) return long[Math.floor(r() * long.length)];
+    }
+    return ok[Math.floor(r() * ok.length)];
+  }
+
+  /** ひとり遊びの記録を更新する。best = {streak, words, longest}, run = {streak}。 */
+  function updateRecords(best, run, result) {
+    const b = { streak: 0, words: 0, longest: "", ...(best || {}) };
+    const streak = result.won ? (run && run.streak || 0) + 1 : 0;
+    const fresh = {};
+    if (streak > b.streak) { b.streak = streak; fresh.streak = true; }
+    if (result.words > b.words) { b.words = result.words; fresh.words = true; }
+    if ((result.longest || "").length > b.longest.length) { b.longest = result.longest; fresh.longest = true; }
+    return { best: b, run: { streak }, fresh };
+  }
+
   const REASON = {
     notTurn: "いまはあなたの番ではありません",
     empty: "言葉を入れてね",
@@ -95,6 +128,6 @@
     notPlaying: "いまは対戦中ではありません",
   };
 
-  const api = { ODAI_CHARS, AVATARS, MAX_PLAYERS, toHira, pickOdai, startGame, submitWord, tick, giveUp, leave, REASON };
+  const api = { CPU_LEVELS, CPU_NAMES, cpuPick, updateRecords, ODAI_CHARS, AVATARS, MAX_PLAYERS, toHira, pickOdai, startGame, submitWord, tick, giveUp, leave, REASON };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.KotobaLogic = api;
 })(this);
